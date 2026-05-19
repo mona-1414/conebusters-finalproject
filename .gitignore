@@ -1,0 +1,14 @@
+# Data
+data/
+*.parquet
+*.csv
+*.json
+
+# Environment
+.env
+*.pem
+__pycache__/
+.venv/
+
+# Notebooks
+.ipynb_checkpoints/
