@@ -1,4 +1,4 @@
-# Conebusters — NYC Taxi Fare Prediction
+# Conebusters Final Project: NYC Taxi Fare Prediction
 
 ## Team
 
