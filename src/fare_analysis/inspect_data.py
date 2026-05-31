@@ -1,14 +1,14 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-spark = (
-    SparkSession.builder
-    .appName("Conebusters_Step1_Inspect")
-    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-    .config("spark.hadoop.fs.s3a.aws.credentials.provider",
-            "com.amazonaws.auth.InstanceProfileCredentialsProvider")
+spark = SparkSession.builder \
+    .appName("Conebusters_Step1_Inspect") \
+    .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4") \
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+    .config("spark.hadoop.fs.s3a.aws.credentials.provider", "com.amazonaws.auth.DefaultAWSCredentialsProviderChain") \
+    .config("spark.hadoop.fs.s3a.connection.timeout", "60000") \
+    .config("spark.hadoop.fs.s3a.connection.establish.timeout", "60000") \
     .getOrCreate()
-)
 spark.sparkContext.setLogLevel("WARN")
 
 df = spark.read.parquet("s3a://de300-project7/processed/consolidated_features/")
@@ -38,7 +38,6 @@ if "Is_Weekend" in df.columns:
 for col in borough_cols:
     df.groupBy(col).count().orderBy(F.desc("count")).show()
 
-# null check
 key_cols = analysis_cols + traffic_cols + borough_cols
 df.select([F.sum(F.col(c).isNull().cast("int")).alias(c) for c in key_cols]).show(truncate=False)
 
