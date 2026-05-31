@@ -8,19 +8,27 @@ spark = SparkSession.builder \
     .config("spark.hadoop.fs.s3a.aws.credentials.provider", "com.amazonaws.auth.DefaultAWSCredentialsProviderChain") \
     .config("spark.hadoop.fs.s3a.connection.timeout", "60000") \
     .config("spark.hadoop.fs.s3a.connection.establish.timeout", "60000") \
+    .config("spark.sql.shuffle.partitions", "4")  \
     .getOrCreate()
 spark.sparkContext.setLogLevel("WARN")
 
 INPUT  = "s3a://de300-project7/processed/consolidated_features/"
 OUTPUT = "s3a://de300-project7/processed/analysis/"
 
-df = spark.read.parquet(INPUT)
+cols_needed = [
+    "fare_amount", "trip_distance", "trip_duration", "average_velocity",
+    "pickup_avg_median_volume", "congestion_surcharge", "cbd_congestion_fee",
+    "traffic_distance_interaction", "Hour_Bin", "Is_Weekend", "pickup_boro",
+]
+df = spark.read.parquet(INPUT).select(cols_needed)
 
 df = df.withColumn(
     "period",
     F.when(F.col("Hour_Bin").isin("Morning_Rush", "Evening_Rush"), "Peak")
      .otherwise("Off_Peak")
 )
+
+df.cache()
 
 # Fare and congestion metrics by time period
 by_hour_bin = df.groupBy("Hour_Bin").agg(
@@ -49,7 +57,6 @@ by_boro = df.groupBy("pickup_boro").agg(
 print("Fare and traffic by borough:")
 by_boro.show()
 
-# Peak vs off-peak split by borough 
 peak_by_boro = df.groupBy("pickup_boro", "period").agg(
     F.count("*").alias("trip_count"),
     F.round(F.avg("fare_amount"), 2).alias("avg_fare"),
@@ -61,22 +68,20 @@ peak_by_boro = df.groupBy("pickup_boro", "period").agg(
 print("Peak vs Off-Peak by borough:")
 peak_by_boro.show(20)
 
-# Pearson correlations: how much does each feature actually move the fare?
-print("Pearson correlations with fare_amount:")
-corr_cols = [
-    "pickup_avg_median_volume",
-    "average_velocity",
-    "trip_duration",
-    "trip_distance",
-    "traffic_distance_interaction",
-]
-for col in corr_cols:
-    r = df.stat.corr(col, "fare_amount")
-    print(f"  {col:<35} r = {r:.4f}")
 
+print("Pearson correlations with fare_amount:")
+df.select(
+    F.corr("pickup_avg_median_volume",    "fare_amount").alias("traffic_volume"),
+    F.corr("average_velocity",            "fare_amount").alias("velocity"),
+    F.corr("trip_duration",               "fare_amount").alias("trip_duration"),
+    F.corr("trip_distance",               "fare_amount").alias("trip_distance"),
+    F.corr("traffic_distance_interaction","fare_amount").alias("traffic_x_distance"),
+).show()
+
+# save to s3
 by_hour_bin.coalesce(1).write.mode("overwrite").csv(OUTPUT + "fare_by_hour_bin", header=True)
 by_boro.coalesce(1).write.mode("overwrite").csv(OUTPUT + "fare_by_borough", header=True)
 peak_by_boro.coalesce(1).write.mode("overwrite").csv(OUTPUT + "peak_vs_offpeak_by_borough", header=True)
 
-print("Saved results to", OUTPUT)
+print("Saved to", OUTPUT)
 spark.stop()
