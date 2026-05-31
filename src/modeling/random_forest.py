@@ -37,10 +37,10 @@ NUMERIC_FEATURES = [
     "trip_duration",
     "passenger_count",
     "RatecodeID",
-    "HH",                     # raw pickup hour (0-23) — kept alongside Hour_Bin
+    "pickup_hour", 
     "Is_Weekend",             # 0/1 flag
-    "pickup_historical_median_volume",   # ATC traffic at pickup borough/dow/hour
-    "dropoff_historical_median_volume",  # ATC traffic at dropoff borough/dow/hour
+    "pickup_avg_median_volume",   # ATC traffic at pickup borough/dow/hour
+    "dropoff_avg_median_volume",  # ATC traffic at dropoff borough/dow/hour
     "traffic_distance_interaction",      # distance * pickup traffic volume
     "tolls_amount",
     "congestion_surcharge",
@@ -51,8 +51,8 @@ NUMERIC_FEATURES = [
 ]
 
 CATEGORICAL_FEATURES = [
-    "pickup_borough",   # borough name string
-    "dropoff_borough",
+    "pickup_boro",   # borough name string
+    "dropoff_boro",
     "Hour_Bin",         # Morning_Rush / Off_Peak_Day / Evening_Rush / Late_Night_Off_Peak
     "payment_type",
     "store_and_fwd_flag",
@@ -156,7 +156,7 @@ congestion_summary = predictions.groupBy("Hour_Bin").agg(
     F.count("*").alias("num_trips"),
     F.round(F.avg("fare_amount"), 2).alias("avg_actual_fare"),
     F.round(F.avg("prediction"), 2).alias("avg_predicted_fare"),
-    F.round(F.avg("pickup_historical_median_volume"), 1).alias("avg_pickup_traffic_vol"),
+    F.round(F.avg("pickup_avg_median_volume"), 1).alias("avg_pickup_traffic_vol"),
     F.round(F.avg("average_velocity"), 3).alias("avg_velocity_mph_per_min"),
 ).orderBy("avg_pickup_traffic_vol", ascending=False)
  
@@ -166,10 +166,10 @@ congestion_summary.show(truncate=False)
  
 # Borough-level breakdown
 print("BOROUGH-LEVEL FARE vs CONGESTION BREAKDOWN\n")
-borough_summary = predictions.groupBy("pickup_borough").agg(
+borough_summary = predictions.groupBy("pickup_boro").agg(
     F.count("*").alias("num_trips"),
     F.round(F.avg("fare_amount"), 2).alias("avg_actual_fare"),
-    F.round(F.avg("pickup_historical_median_volume"), 1).alias("avg_traffic_vol"),
+    F.round(F.avg("pickup_avg_median_volume"), 1).alias("avg_traffic_vol"),
     F.round(F.avg("trip_duration"), 2).alias("avg_trip_duration_min"),
 ).orderBy("avg_traffic_vol", ascending=False)
  
