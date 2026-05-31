@@ -30,7 +30,7 @@ df.printSchema()
 
 # Feature and Target Selection
 
-# Numeric...
+# Numeric... (commented out old features)
 
 NUMERIC_FEATURES = [
     "trip_distance",
@@ -57,6 +57,29 @@ CATEGORICAL_FEATURES = [
     "payment_type",
     "store_and_fwd_flag",
 ]
+'''
+NUMERIC_FEATURES = [
+    "trip_distance",
+    "trip_duration",
+    "passenger_count",
+    "RatecodeID",
+    "pickup_hour", 
+    "Is_Weekend",             # 0/1 flag
+    "pickup_avg_median_volume",   # ATC traffic at pickup borough/dow/hour
+    "dropoff_avg_median_volume",  # ATC traffic at dropoff borough/dow/hour
+    "tolls_amount",
+    "congestion_surcharge",
+    "Airport_fee",
+    "cbd_congestion_fee",
+    "extra",
+    "mta_tax",
+]
+CATEGORICAL_FEATURES = [
+    "pickup_boro",   # borough name string
+    "dropoff_boro",
+    "Hour_Bin",         # Morning_Rush / Off_Peak_Day / Evening_Rush / Late_Night_Off_Peak
+]
+'''
 
 TARGET = "fare_amount"
 
@@ -157,7 +180,6 @@ congestion_summary = predictions.groupBy("Hour_Bin").agg(
     F.round(F.avg("fare_amount"), 2).alias("avg_actual_fare"),
     F.round(F.avg("prediction"), 2).alias("avg_predicted_fare"),
     F.round(F.avg("pickup_avg_median_volume"), 1).alias("avg_pickup_traffic_vol"),
-    F.round(F.avg("average_velocity"), 3).alias("avg_velocity_mph_per_min"),
 ).orderBy("avg_pickup_traffic_vol", ascending=False)
  
 congestion_summary.show(truncate=False)
