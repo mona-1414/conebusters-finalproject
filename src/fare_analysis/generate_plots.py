@@ -118,4 +118,13 @@ ax.set_ylabel("Average Fare ($)")
 ax.set_title("Traffic Volume vs Average Fare by Borough\n(bubble size = trip count)")
 save(fig, "traffic_vs_fare_by_borough.png")
 
+# Average fare by time period
+fig, ax = plt.subplots(figsize=(8, 5))
+bars = ax.bar(display_names, hour_sorted["avg_fare"], color=BLUE)
+ax.bar_label(bars, fmt="$%.2f", padding=3)
+ax.set_ylabel("Average Fare ($)")
+ax.set_title("Average Fare by Time Period")
+ax.set_ylim(17, 20)  # narrow y-axis to make the <$1 difference visible
+save(fig, "fare_by_hour_bin.png")
+
 print("all plots saved to s3://" + BUCKET + "/" + PLOTS_S3)
