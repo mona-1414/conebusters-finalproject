@@ -1,30 +1,29 @@
-from .config import S3_BUCKET, MOVIE_EMBEDDINGS_KEY, MOVIES_META_KEY
+S3_BUCKET  = "ndm4080"
+ZIP_S3_KEY = "homework4/ml-1m.zip"
 
-def _load_movie_embeddings(bucket):
-    from .s3_utils import download_npy, download_dataframe
-    import numpy as np
-    embeddings = download_npy(bucket, MOVIE_EMBEDDINGS_KEY)
-    meta = download_dataframe(bucket, MOVIES_META_KEY)
-    return dict(zip(meta["MovieID"].astype(int), embeddings)), meta
+MOVIE_EMBEDDINGS_KEY   = "homework4/embeddings/movie_embeddings.npy"
+MOVIES_META_KEY        = "homework4/embeddings/movies_meta.csv"
+STATE_PREFIX           = "homework4/state/"
+RECOMMENDATIONS_PREFIX = "homework4/recommendations/"
 
-def task_generate_movie_embeddings(**context):
-    from .movie_embeddings import generate_movie_embeddings
-    generate_movie_embeddings(bucket=S3_BUCKET)
+BERT_MODEL_NAME       = "all-MiniLM-L6-v2"
+USER_SAMPLE_FRACTION  = 0.30
+TOP_N_RECOMMENDATIONS = 5
+TOP_USER_PERCENTILE   = 95
+RANDOM_SEED           = 42
 
-def task_compute_user_embeddings(iteration: int, **context):
-    from .data_partitioning import load_all_ratings, get_cumulative_ratings
-    from .user_embeddings import compute_and_save_user_embeddings
-    ratings = load_all_ratings(S3_BUCKET)
-    cum = get_cumulative_ratings(ratings, iteration)
-    movie_embeddings, _ = _load_movie_embeddings(S3_BUCKET)
-    compute_and_save_user_embeddings(cum, movie_embeddings, S3_BUCKET, iteration)
+_tz = datetime.timezone.utc
 
-def task_generate_recommendations(iteration: int, **context):
-    from .data_partitioning import load_all_ratings, get_cumulative_ratings
-    from .user_embeddings import load_user_embeddings
-    from .recommendations import generate_and_save_recommendations
-    ratings = load_all_ratings(S3_BUCKET)
-    cum = get_cumulative_ratings(ratings, iteration)
-    movie_embeddings, movies_df = _load_movie_embeddings(S3_BUCKET)
-    user_embeddings = load_user_embeddings(S3_BUCKET, iteration)
-    generate_and_save_recommendations(cum, movie_embeddings, user_embeddings, movies_df, S3_BUCKET, iteration)
+def _ts(y, m, d, end_of_day=False):
+    return int(datetime.datetime(y, m, d,
+                                 23 if end_of_day else 0,
+                                 59 if end_of_day else 0,
+                                 59 if end_of_day else 0,
+                                 tzinfo=_tz).timestamp())
+
+PARTITION_BOUNDS = [
+    (_ts(2000, 4, 25), _ts(2000, 8,  3,  end_of_day=True)),
+    (_ts(2000, 8,  4), _ts(2000, 10, 31, end_of_day=True)),
+    (_ts(2000, 11, 1), _ts(2000, 11, 25, end_of_day=True)),
+    (_ts(2000, 11, 26), None),
+]
