@@ -1,4 +1,3 @@
-
 #DAG 1 (embeddings_dag):   generate movie embeddings once and store to S3.
 #DAG 2 (recommendation_dag): for each of 4 iterations, compute user embeddings
 #then generate recommendations (sequential within
@@ -25,16 +24,42 @@ with DAG(
     description="Generate and upload movie embeddings to S3 (run once).",
     default_args=DEFAULT_ARGS,
     start_date=datetime(2024, 1, 1),
-    schedule_interval=None,          # triggered manually / by CI
+    schedule=None,          # triggered manually / by CI
     catchup=False,
     tags=["conebusters", "embeddings"],
 ) as embeddings_dag:
  
+    # Helper to capture top-level package or script import crashes
+    def run_with_logging(**ctx):
+        import traceback
+        import boto3
+        import sys
+        import subprocess
+        try:
+            # ── INLINE ESCAPE HATCH ──────────────────────────────────────────
+            # Force the active worker node to install the ML library dynamically,
+            # bypassing the broken and constrained global AWS console installer.
+            print("Executing dynamic worker installation for sentence-transformers...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "sentence-transformers", "--no-cache-dir"])
+            # ─────────────────────────────────────────────────────────────────
+
+            return __import__(
+                "hw4.src.pipeline", fromlist=["task_generate_movie_embeddings"]
+            ).task_generate_movie_embeddings(**ctx)
+        except Exception as e:
+            error_msg = traceback.format_exc()
+            s3 = boto3.client('s3')
+            s3.put_object(
+                Bucket="yegon-jay-lab6",
+                Key="homework4/mwaa_crash_report.txt",
+                Body=error_msg,
+                ServerSideEncryption='AES256'
+            )
+            raise e
+
     generate_movie_embeddings = PythonOperator(
         task_id="generate_movie_embeddings",
-        python_callable=lambda **ctx: __import__(
-            "hw4.src.pipeline", fromlist=["task_generate_movie_embeddings"]
-        ).task_generate_movie_embeddings(**ctx),
+        python_callable=run_with_logging,
     )
  
 # per user reccomendations and iterations 
@@ -46,12 +71,12 @@ with DAG(
     description="Compute user embeddings and generate recommendations for 4 iterations.",
     default_args=DEFAULT_ARGS,
     start_date=datetime(2024, 1, 1),
-    schedule_interval=None,          # triggered manually / downstream of embeddings_dag
+    schedule=None,          # triggered manually / downstream of embeddings_dag
     catchup=False,
     tags=["conebusters", "recommendations"],
 ) as recommendation_dag:
  
-    for i in range(1, NUM_ITERATIONS + 1):
+    for i in range(NUM_ITERATIONS):
  
         compute_user_embeddings = PythonOperator(
             task_id=f"compute_user_embeddings_iter_{i}",
