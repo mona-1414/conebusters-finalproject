@@ -1,0 +1,11 @@
+Teammates:
+- Mona Gomaa
+- Nicholas Melo
+- Jay Yegon
+
+MWAA Environment Name:
+- conebusters-v2-hw4
+
+S3 Bucket Name:
+- yegon-jay-lab6
+

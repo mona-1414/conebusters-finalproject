@@ -66,3 +66,9 @@ def load_zip_data(bucket, zip_key):
                                   names=["UserID", "MovieID", "Rating", "Timestamp"],
                                   encoding="latin-1")
     return movies, ratings
+
+def load_all_ratings(bucket):
+    """Load only the ratings DataFrame directly from the ml-1m zip in S3."""
+    from .config import ZIP_S3_KEY
+    _, ratings = load_zip_data(bucket, ZIP_S3_KEY)
+    return ratings

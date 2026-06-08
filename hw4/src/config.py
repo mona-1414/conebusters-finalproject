@@ -1,4 +1,6 @@
-S3_BUCKET  = "ndm4080"
+import datetime
+
+S3_BUCKET  = "yegon-jay-lab6"
 ZIP_S3_KEY = "homework4/ml-1m.zip"
 
 MOVIE_EMBEDDINGS_KEY   = "homework4/embeddings/movie_embeddings.npy"
@@ -24,6 +26,6 @@ def _ts(y, m, d, end_of_day=False):
 PARTITION_BOUNDS = [
     (_ts(2000, 4, 25), _ts(2000, 8,  3,  end_of_day=True)),
     (_ts(2000, 8,  4), _ts(2000, 10, 31, end_of_day=True)),
-    (_ts(2000, 11, 1), _ts(2000, 11, 25, end_of_day=True)),
+    (_ts(2000, 11, 1), _ts(2000, 11, 26, end_of_day=True)),
     (_ts(2000, 11, 26), None),
 ]
