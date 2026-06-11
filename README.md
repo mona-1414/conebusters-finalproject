@@ -54,11 +54,18 @@ python3 src/your_script.py
 
 Follow the EC2 and local setup above and run the below code in EC2 in order.
 
-`python3 src/ingestion/load_tlc.py`
-`python3 src/ingestion/load_atc.py`
-python3 src/preprocessing/clean_tlc_data.py
-python3 src/preprocessing/clean_atc_data.py
-python3 src/fare_analysis/inspect_data.py
-python3 src/fare_analysis/congestion_analysis.py
-python3 src/fare_analysis/generate_plots.py
-python3 src/modeling/random_forest.py
+`python3 src/ingestion/load_tlc.py`  
+
+`python3 src/ingestion/load_atc.py`  
+
+`python3 src/preprocessing/clean_tlc_data.py`  
+
+`python3 src/preprocessing/clean_atc_data.py`  
+
+`python3 src/fare_analysis/inspect_data.py`  
+
+`python3 src/fare_analysis/congestion_analysis.py`  
+
+`python3 src/fare_analysis/generate_plots.py`  
+
+`python3 src/modeling/random_forest.py`
