@@ -47,5 +47,18 @@ python3 src/your_script.py
 
 1. `src/ingestion/` — Load TLC + ATC data from S3 into PySpark
 2. `src/preprocessing/` — Clean and impute missing values
-3. `src/analysis/` — Congestion vs fare analysis
+3. `src/fare_analysis/` — Congestion vs fare analysis
 4. `src/modeling/` — PySpark Random Forest fare prediction
+
+## Running the Code
+
+Follow the EC2 and local setup above and run the below code in EC2 in order.
+
+1. python3 src/ingestion/load_tlc.py
+   python3 src/ingestion/load_atc.py
+2. python3 src/preprocessing/clean_tlc_data.py
+   python3 src/preprocessing/clean_atc_data.py
+3. python3 src/fare_analysis/inspect_data.py
+   python3 src/fare_analysis/congestion_analysis.py
+   python3 src/fare_analysis/generate_plots.py
+4. python3 src/modeling/random_forest.py
